@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -25,19 +24,15 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
                 context.BindingInfo.BindingSource.CanAcceptDataFrom(BindingSource.Header))
             {
                 var loggerFactory = context.Services.GetRequiredService<ILoggerFactory>();
-                var logger = loggerFactory.CreateLogger<HeaderModelBinderProvider>();
 
-                // We only support strings and collections of strings. Some cases can fail
-                // at runtime due to collections we can't modify.
-                if (context.Metadata.ModelType == typeof(string) ||
-                    context.Metadata.ElementType == typeof(string))
+                var metadata = context.Metadata.GetMetadataForType(context.Metadata.ModelType);
+                var innerModelBinder = context.CreateBinder(metadata);
+                if (innerModelBinder == null)
                 {
-                    return new HeaderModelBinder(loggerFactory);
+                    return null;
                 }
-                else
-                {
-                    logger.CannotCreateHeaderModelBinder(context.Metadata.ModelType);
-                }
+
+                return new HeaderModelBinder(loggerFactory, innerModelBinder);
             }
 
             return null;

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Mvc.ModelBinding
 {
@@ -82,6 +83,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding
         {
             var services = new ServiceCollection();
             services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+            services.AddOptions<IOptions<MvcOptions>>();
             return services.BuildServiceProvider();
         }
     }
