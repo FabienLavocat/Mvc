@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Moq;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
@@ -29,8 +30,9 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
         {
             // Arrange
             var provider = new HeaderModelBinderProvider();
-
+            var testBinder = Mock.Of<IModelBinder>();
             var context = new TestModelBinderProviderContext(typeof(string));
+            context.OnCreatingBinder(modelMetadata => testBinder);
             context.BindingInfo.BindingSource = source;
 
             // Act
@@ -45,47 +47,26 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
         {
             // Arrange
             var provider = new HeaderModelBinderProvider();
-
+            var testBinder = Mock.Of<IModelBinder>();
             var context = new TestModelBinderProviderContext(typeof(string));
+            context.OnCreatingBinder(modelMetadata => testBinder);
             context.BindingInfo.BindingSource = BindingSource.Header;
 
             // Act
             var result = provider.GetBinder(context);
 
             // Assert
-            Assert.IsType<HeaderModelBinder>(result);
+            var headerModelBinder = Assert.IsType<HeaderModelBinder>(result);
+            Assert.Same(testBinder, headerModelBinder.InnerModelBinder);
         }
 
-        [Theory]
-        [InlineData(typeof(string))]
-        [InlineData(typeof(IEnumerable<string>))]
-        [InlineData(typeof(string[]))]
-        [InlineData(typeof(Collection<string>))]
-        public void Create_WhenModelTypeIsSupportedType_ReturnsBinder(Type modelType)
+        [Fact]
+        public void Create_WhenBindingSourceIsFromHeader_NoInnerBinderAvailable_ReturnsNull()
         {
             // Arrange
             var provider = new HeaderModelBinderProvider();
-
-            var context = new TestModelBinderProviderContext(modelType);
-            context.BindingInfo.BindingSource = BindingSource.Header;
-
-            // Act
-            var result = provider.GetBinder(context);
-
-            // Assert
-            Assert.IsType<HeaderModelBinder>(result);
-        }
-
-        [Theory]
-        [InlineData(typeof(Dictionary<int, string>))]
-        [InlineData(typeof(Collection<int>))]
-        [InlineData(typeof(Person))]
-        public void Create_WhenModelTypeIsUnsupportedType_ReturnsNull(Type modelType)
-        {
-            // Arrange
-            var provider = new HeaderModelBinderProvider();
-
-            var context = new TestModelBinderProviderContext(modelType);
+            var context = new TestModelBinderProviderContext(typeof(string));
+            context.OnCreatingBinder(modelMetadata => null);
             context.BindingInfo.BindingSource = BindingSource.Header;
 
             // Act
@@ -93,13 +74,6 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
 
             // Assert
             Assert.Null(result);
-        }
-
-        private class Person
-        {
-            public string Name { get; set; }
-
-            public int Age { get; set; }
         }
     }
 }
