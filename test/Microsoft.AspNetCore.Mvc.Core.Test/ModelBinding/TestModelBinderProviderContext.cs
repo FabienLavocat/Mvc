@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -83,7 +84,12 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding
         {
             var services = new ServiceCollection();
             services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
-            services.AddOptions<IOptions<MvcOptions>>();
+
+            var options = Options.Create(new MvcOptions());
+            var setup = new MvcCoreMvcOptionsSetup(new TestHttpRequestStreamReaderFactory());
+            setup.Configure(options.Value);
+            services.AddSingleton(options);
+
             return services.BuildServiceProvider();
         }
     }
